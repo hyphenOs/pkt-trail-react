@@ -1,12 +1,18 @@
 import React from "react";
+import JSONTree from "react-json-tree";
 
 const JSONViewer = (layers) => {
   console.log(layers);
   return (
     <div>
-      <p>JSON VIewer</p>
-      <JSONPretty id="json-pretty" data={layers}/>
-      <pre>{JSON.stringify(layers, null, 4)}</pre>
+      <h2>JSON VIewer</h2>
+      <JSONTree
+        data={layers}
+        theme="monokai"
+        hideRoot={true}
+        getItemString={(type, data, itemType, itemString) => <span></span>}
+        shouldExpandNode={(keyPath, data, level) => (level <= 1 ? true : false)}
+      />
     </div>
   );
 };

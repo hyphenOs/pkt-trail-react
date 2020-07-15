@@ -22,6 +22,10 @@
   color: #292961;
 }
 .dashboard-button:hover {
-  background: darkgray;
+  background: lightgray;
+  color: white;
+}
+.dashboard-button:disabled {
+  background-color: darkgrey;
   color: white;
 }
