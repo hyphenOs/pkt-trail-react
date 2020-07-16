@@ -17,13 +17,11 @@ const Table = ({ data, setSelected, selected }) => {
         </thead>
         <tbody>
           {data.map((rawJSON, index) => {
-            const json = JSON.parse(rawJSON);
-            console.log(index);
+            const packet = JSON.parse(rawJSON);
             const {
-              _source: {
-                layers: { frame, ip },
-              },
-            } = json;
+              frame,
+              ip
+            } = packet;
             return (
               <tr
                 className={selected.index === index ? "selected" : ""}
@@ -32,8 +30,8 @@ const Table = ({ data, setSelected, selected }) => {
               >
                 <td>{frame["frame.number"]}</td>
                 <td>{frame["frame.time_relative"]}</td>
-                <td>{ip["ip.src"]}</td>
-                <td>{ip["ip.dst"]}</td>
+                <td>{ip ? ip["ip.src"] : "unknonwn"}</td>
+                <td>{ip ? ip["ip.dst"] : "unknonwn"}</td>
                 <td>{frame["frame.protocols"]}</td>
                 <td>{frame["frame.len"]}</td>
               </tr>

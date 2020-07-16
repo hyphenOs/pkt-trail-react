@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Table from "./Table";
 import JSONViewer from "./JSONViewer";
 
@@ -8,23 +8,31 @@ const WebSocket_API = "ws://localhost:3030";
 const socketClient = new WebSocket(WebSocket_API);
 
 const Dashboard = () => {
-  const [data, setData] = useState([]);
   const [message, setMessage] = useState("");
+  const [count, setCount] = useState(0);
   const [selected, setSelected] = useState({});
+
+  useEffect(() => {
+    console.log("mounting");
+    localStorage.removeItem("pcapData");
+  }, []);
 
   socketClient.onopen = (e) => {
     console.log("connection opened");
   };
 
   socketClient.onmessage = (e) => {
-    console.log("Message received");
-    setData((prevData) => [...prevData, e.data]);
+    const localData = JSON.parse(localStorage.getItem("pcapData")) || [];
+    localStorage.setItem("pcapData", JSON.stringify([...localData, e.data]));
+    setCount(count + 1);
   };
 
   const stream = (message) => {
     setMessage(message);
     socketClient.send(message);
   };
+
+  const data = JSON.parse(localStorage.getItem("pcapData") || "[]");
 
   return (
     <div>
@@ -49,11 +57,15 @@ const Dashboard = () => {
           Stop
         </button>
       </div>
-      <Table setSelected={setSelected} selected={selected} data={data} />
-      {selected?.selected && (
-        <JSONViewer
-          layers={JSON.parse(data[selected.index])["_source"]["layers"]}
-        />
+      {Boolean(count) && (
+        <>
+          <Table setSelected={setSelected} selected={selected} data={data} />
+          {selected?.selected && (
+            <JSONViewer
+              selectedData={JSON.parse(data[selected.index])}
+            />
+          )}
+        </>
       )}
     </div>
   );
