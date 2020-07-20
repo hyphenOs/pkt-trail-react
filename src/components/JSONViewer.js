@@ -10,7 +10,6 @@ const JSONViewer = ({ selectedData }) => {
         theme="monokai"
         hideRoot={true}
         getItemString={(type, data, itemType, itemString) => <span></span>}
-        shouldExpandNode={(keyPath, data, level) => (level <= 1 ? true : false)}
       />
     </div>
   );

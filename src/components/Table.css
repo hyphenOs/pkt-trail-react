@@ -1,11 +1,18 @@
 .table-container {
   max-height: 50vh;
   overflow-y: scroll;
+  padding: 1px;
   margin: 20px;
 }
 table {
   width: 90vw;
   margin: auto;
+  border-collapse: collapse;
+}
+th {
+  position: sticky;
+  top: 0;
+  background-color: aliceblue;
 }
 tr {
   text-align: center;
