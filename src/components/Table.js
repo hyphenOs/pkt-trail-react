@@ -1,7 +1,30 @@
 import React from "react";
 import "./Table.css";
 
-const Table = ({ data, setSelected, selected }) => {
+const Table = ({ setSelected, selected, count }) => {
+  let min = 1;
+  let max = count;
+
+  const renderPackets = (min, max) => {
+    for (let i = min; i <= max; i++) {
+      const { frame, ip } = JSON.parse(localStorage.getItem(count) || "{}");
+      return (
+        <tr
+        // className={selected.selected && selected.index === index ? "selected" : ""}
+        // key={index}
+        // onClick={() => setSelected({ selected: true, index })}
+        >
+          <td>{frame["frame.number"]}</td>
+          <td>{frame["frame.time"]}</td>
+          <td>{ip ? ip["ip.src"] : "unknown"}</td>
+          <td>{ip ? ip["ip.dst"] : "unknown"}</td>
+          <td>{frame["frame.protocols"]}</td>
+          <td>{frame["frame.len"]}</td>
+        </tr>
+      );
+    }
+  };
+
   return (
     <div className="table-container">
       <table>
@@ -15,29 +38,7 @@ const Table = ({ data, setSelected, selected }) => {
             <th>Length</th>
           </tr>
         </thead>
-        <tbody>
-          {data.map((rawJSON, index) => {
-            const packet = JSON.parse(rawJSON);
-            const {
-              frame,
-              ip
-            } = packet;
-            return (
-              <tr
-                className={selected.index === index ? "selected" : ""}
-                key={index}
-                onClick={() => setSelected({ selected: true, index })}
-              >
-                <td>{frame["frame.number"]}</td>
-                <td>{frame["frame.time_relative"]}</td>
-                <td>{ip ? ip["ip.src"] : "unknonwn"}</td>
-                <td>{ip ? ip["ip.dst"] : "unknonwn"}</td>
-                <td>{frame["frame.protocols"]}</td>
-                <td>{frame["frame.len"]}</td>
-              </tr>
-            );
-          })}
-        </tbody>
+        <tbody>{renderPackets(min, max)}</tbody>
       </table>
     </div>
   );

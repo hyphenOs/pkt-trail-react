@@ -10,11 +10,11 @@ const socketClient = new WebSocket(WebSocket_API);
 const Dashboard = () => {
   const [message, setMessage] = useState("");
   const [count, setCount] = useState(0);
-  const [selected, setSelected] = useState({});
+  const [selected, setSelected] = useState({ selected: true, index: null });
 
   useEffect(() => {
     console.log("mounting");
-    localStorage.removeItem("pcapData");
+    localStorage.clear();
   }, []);
 
   socketClient.onopen = (e) => {
@@ -22,17 +22,15 @@ const Dashboard = () => {
   };
 
   socketClient.onmessage = (e) => {
-    const localData = JSON.parse(localStorage.getItem("pcapData")) || [];
-    localStorage.setItem("pcapData", JSON.stringify([...localData, e.data]));
-    setCount(count + 1);
+    const newCount = count + 1;
+    localStorage.setItem(`${newCount}`, e.data);
+    setCount(newCount);
   };
 
   const stream = (message) => {
     setMessage(message);
     socketClient.send(message);
   };
-
-  const data = JSON.parse(localStorage.getItem("pcapData") || "[]");
 
   return (
     <div>
@@ -59,12 +57,10 @@ const Dashboard = () => {
       </div>
       {Boolean(count) && (
         <>
-          <Table setSelected={setSelected} selected={selected} data={data} />
-          {selected?.selected && (
-            <JSONViewer
-              selectedData={JSON.parse(data[selected.index])}
-            />
-          )}
+          <Table setSelected={setSelected} selected={selected} count={count} />
+          {/* {selected?.selected && (
+            <JSONViewer selectedData={JSON.parse(data[selected.index])} />
+          )} */}
         </>
       )}
     </div>
