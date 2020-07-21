@@ -1,13 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import "./Table.css";
 
-const Table = ({ packet, setSelected, selected }) => {
-  // const [packets, setPackets] = useState(packet);
-  
-  useEffect(()=>{
-
-  },[packet])
-  
+const Table = ({ data, setSelected, selected }) => {
   return (
     <div className="table-container">
       <table>
@@ -27,9 +21,9 @@ const Table = ({ packet, setSelected, selected }) => {
             const { frame, ip } = packet;
             return (
               <tr
-                className={selected === index ? "selected" : ""}
+                className={selected.index === index ? "selected" : ""}
                 key={index}
-                onClick={() => setSelected(packet)}
+                onClick={() => setSelected({ selected: true, index })}
               >
                 <td>{frame["frame.number"]}</td>
                 <td>{frame["frame.time_relative"]}</td>
