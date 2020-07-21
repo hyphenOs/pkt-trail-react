@@ -5,14 +5,16 @@ const Table = ({ setSelected, selected, count }) => {
   let min = 1;
   let max = count;
 
-  const renderPackets = (min, max) => {
+  const renderPackets = (min, max, ) => {
+    let packets = []
     for (let i = min; i <= max; i++) {
-      const { frame, ip } = JSON.parse(localStorage.getItem(count) || "{}");
-      return (
+      const packet = JSON.parse(localStorage.getItem(i) || "{}");
+      const { frame, ip } = packet;
+      packets.push(
         <tr
-        // className={selected.selected && selected.index === index ? "selected" : ""}
-        // key={index}
-        // onClick={() => setSelected({ selected: true, index })}
+          // className={selected.selected && selected.index === index ? "selected" : ""}
+          // key={index}
+          // onClick={() => setSelected({ selected: true, index })}
         >
           <td>{frame["frame.number"]}</td>
           <td>{frame["frame.time"]}</td>
@@ -23,6 +25,7 @@ const Table = ({ setSelected, selected, count }) => {
         </tr>
       );
     }
+    return packets
   };
 
   return (
