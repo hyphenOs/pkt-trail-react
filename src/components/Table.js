@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import "./Table.css";
+import useWindowUnloadEffect from "../utils/useWindowUnloadEffect";
 
 const Table = ({ getSelectedPacket, packet }) => {
+  const cleanup = () => {
+    console.log("clearing localStorage");
+    localStorage.clear();
+  };
+  useWindowUnloadEffect(cleanup, true);
+
   const [count, setCount] = useState(0);
   const [_windowStart, setWindowStart] = useState(1);
   const [windowEnd, setWindowEnd] = useState(0);
