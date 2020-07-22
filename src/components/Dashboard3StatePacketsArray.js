@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Table from "./Table";
+import Table3StatePacketsArray from "./Table3StatePacketsArray";
 import JSONViewer from "./JSONViewer";
 
 import "./Dashboard.css";
@@ -57,7 +57,11 @@ const Dashboard = () => {
       </div>
       {Boolean(count) && (
         <>
-          <Table setSelected={setSelected} selected={selected} count={count} />
+          <Table3StatePacketsArray
+            setSelected={setSelected}
+            selected={selected}
+            count={count}
+          />
           {/* {selected?.selected && (
             <JSONViewer selectedData={JSON.parse(data[selected.index])} />
           )} */}

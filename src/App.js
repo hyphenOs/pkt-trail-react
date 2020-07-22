@@ -1,10 +1,14 @@
 import React from "react";
-import Dashboard from "./components/Dashboard";
+import Dashboard1LocalStoragePacketsArray from "./components/Dashboard1LocalStoragePacketsArray";
+import Dashboard2LocalStoragePacketObjects from "./components/Dashboard2LocalStoragePacketObjects";
+import Dashboard3StatePacketsArray from "./components/Dashboard3StatePacketsArray";
 
 function App() {
   return (
     <div className="App">
-      <Dashboard />
+      {/* <Dashboard1LocalStoragePacketsArray /> */}
+      {/* <Dashboard2LocalStoragePacketObjects /> */}
+      <Dashboard3StatePacketsArray />
     </div>
   );
 }
