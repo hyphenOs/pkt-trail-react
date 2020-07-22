@@ -1,9 +1,21 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./Table.css";
 
-const Table = ({ setSelected, selected, count }) => {
+const Table = ({ packet, getSelectedPacket }) => {
   let min = 1;
-  let max = count;
+  let max = localStorage.length;
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    newCount += 1;
+    localStorage.setItem(newCount, packet);
+    setCount(newCount);
+
+    return ()=>{
+      setCount(0);
+         
+    }
+  }, [packet]);
 
   const renderPackets = (min, max) => {
     for (let i = min; i <= max; i++) {

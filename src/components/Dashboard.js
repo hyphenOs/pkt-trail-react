@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from "react";
-import Table3StatePacketsArray from "./Table3StatePacketsArray";
-import JSONViewer from "./JSONViewer";
-
+import Table from "./Table";
+import PacketDetailsViewer from "./PacketDetailsViewer";
 import "./Dashboard.css";
 
 const WebSocket_API = "ws://localhost:3030";
 const socketClient = new WebSocket(WebSocket_API);
 
 const Dashboard = () => {
-  const [message, setMessage] = useState("");
-  const [count, setCount] = useState(0);
-  const [selected, setSelected] = useState({ selected: true, index: null });
+  const [streamMessage, setStreamMessage] = useState("");
+  const [packet, setPacket] = useState(null);
+  const [selectedPacket, setSelectedPacket] = useState(null);
 
   useEffect(() => {
     console.log("mounting");
-    localStorage.clear();
   }, []);
 
   socketClient.onopen = (e) => {
@@ -22,14 +20,16 @@ const Dashboard = () => {
   };
 
   socketClient.onmessage = (e) => {
-    const newCount = count + 1;
-    localStorage.setItem(`${newCount}`, e.data);
-    setCount(newCount);
+    setPacket(e.data);
   };
 
   const stream = (message) => {
-    setMessage(message);
+    setStreamMessage(message);
     socketClient.send(message);
+  };
+
+  const getSelectedPacket = (packet) => {
+    setSelectedPacket(packet);
   };
 
   return (
@@ -41,7 +41,7 @@ const Dashboard = () => {
         <button
           className="dashboard-button"
           data-testid="button-start"
-          disabled={message === "start"}
+          disabled={streamMessage === "start"}
           onClick={() => stream("start")}
         >
           Start
@@ -49,23 +49,17 @@ const Dashboard = () => {
         <button
           className="dashboard-button"
           data-testid="button-stop"
-          disabled={message === "stop"}
+          disabled={streamMessage === "stop"}
           onClick={() => stream("stop")}
         >
           Stop
         </button>
       </div>
-      {Boolean(count) && (
-        <>
-          <Table3StatePacketsArray
-            setSelected={setSelected}
-            selected={selected}
-            count={count}
-          />
-          {/* {selected?.selected && (
-            <JSONViewer selectedData={JSON.parse(data[selected.index])} />
-          )} */}
-        </>
+      {packet && (
+        <Table getSelectedPacket={setSelectedPacket} packet={packet} />
+      )}
+      {selectedPacket && (
+        <PacketDetailsViewer selectedPacket={selectedPacket} />
       )}
     </div>
   );
