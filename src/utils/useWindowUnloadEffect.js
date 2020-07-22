@@ -1,6 +1,6 @@
 // Using cutom hook from here https://stackoverflow.com/a/39085062
 
-const { useEffect } = require("react");
+const { useEffect, useRef } = require("react");
 
 const useWindowUnloadEffect = (handler, callOnCleanup) => {
   const cbRef = useRef(); // creating Ref
@@ -8,7 +8,7 @@ const useWindowUnloadEffect = (handler, callOnCleanup) => {
   cbRef.current = handler; // current value persists across the component lifecycle
 
   useEffect(() => {
-    const handler = () => cb.current();
+    const handler = () => cbRef.current();
     window.addEventListener("beforeunload", handler);
 
     return () => {
@@ -17,3 +17,5 @@ const useWindowUnloadEffect = (handler, callOnCleanup) => {
     };
   }, [cbRef]);
 };
+
+export default useWindowUnloadEffect;
