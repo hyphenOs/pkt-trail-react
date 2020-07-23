@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import "./Table.css";
-import useWindowUnloadEffect from "../utils/useWindowUnloadEffect";
+import useWindowUnloadEffect from "./utils/useWindowUnloadEffect";
 
 const Table = ({ getSelectedPacket, packet }) => {
+  // check if packet is object or collection of objects []
 
   const cleanup = () => {
     console.log("clearing localStorage");
@@ -11,7 +12,7 @@ const Table = ({ getSelectedPacket, packet }) => {
 
   useWindowUnloadEffect(cleanup, true);
 
-  const [windowStart, ] = useState(1);
+  const [windowStart] = useState(1);
   const [windowEnd, setWindowEnd] = useState(0);
   const [selectedPacketRow, setSelectedPacketRow] = useState({
     index: null,
@@ -53,7 +54,9 @@ const Table = ({ getSelectedPacket, packet }) => {
           className={
             selectedPacketRow && selectedPacketRow.index === i ? "selected" : ""
           }
-          onClick={() =>  (packet !== {} ? setSelectedPacketRow({ index: i, packet }): null)}
+          onClick={() =>
+            packet !== {} ? setSelectedPacketRow({ index: i, packet }) : null
+          }
         >
           <td>{frame["frame.number"]}</td>
           <td>{frame["frame.time"]}</td>
