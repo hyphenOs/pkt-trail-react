@@ -8,7 +8,7 @@ const socketClient = new WebSocket(WebSocket_API);
 
 const Dashboard = () => {
   const [streamMessage, setStreamMessage] = useState("");
-  const [packet, setPacket] = useState(null);
+  const [packets, setPackets] = useState(null);
   const [selectedPacket, setSelectedPacket] = useState(null);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ const Dashboard = () => {
   };
 
   socketClient.onmessage = (e) => {
-    setPacket(e.data);
+    setPackets(e.data);
   };
 
   const stream = (message) => {
@@ -58,8 +58,8 @@ const Dashboard = () => {
           Stop
         </button>
       </div>
-      {packet && (
-        <Table getSelectedPacket={getSelectedPacket} packet={packet} />
+      {packets && (
+        <Table getSelectedPacket={getSelectedPacket} packets={packets} />
       )}
       {selectedPacket && (
         <PacketDetailsViewer selectedPacket={selectedPacket} />
