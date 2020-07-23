@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from "react";
-import Table from "./Table";
-import PacketDetailsViewer from "./PacketDetailsViewer";
+import Table2LocalStoragePacketObjects from "./Table2LocalStoragePacketObjects";
+import JSONViewer from "./JSONViewer";
+
 import "./Dashboard.css";
 
 const WebSocket_API = "ws://localhost:3030";
 const socketClient = new WebSocket(WebSocket_API);
 
 const Dashboard = () => {
-  const [streamMessage, setStreamMessage] = useState("");
-  const [packets, setPackets] = useState(null);
-  const [selectedPacket, setSelectedPacket] = useState(null);
+  const [message, setMessage] = useState("");
+  const [count, setCount] = useState(0);
+  const [selected, setSelected] = useState({ selected: true, index: null });
 
   useEffect(() => {
-    return () => {
-      console.log("Unmounting dashboard");
-      localStorage.clear();
-    };
+    console.log("mounting");
+    localStorage.clear();
   }, []);
 
   socketClient.onopen = (e) => {
@@ -23,16 +22,14 @@ const Dashboard = () => {
   };
 
   socketClient.onmessage = (e) => {
-    setPackets(e.data);
+    const newCount = count + 1;
+    localStorage.setItem(`${newCount}`, e.data);
+    setCount(newCount);
   };
 
   const stream = (message) => {
-    setStreamMessage(message);
+    setMessage(message);
     socketClient.send(message);
-  };
-
-  const getSelectedPacket = (packet) => {
-    setSelectedPacket(packet);
   };
 
   return (
@@ -44,7 +41,7 @@ const Dashboard = () => {
         <button
           className="dashboard-button"
           data-testid="button-start"
-          disabled={streamMessage === "start"}
+          disabled={message === "start"}
           onClick={() => stream("start")}
         >
           Start
@@ -52,17 +49,23 @@ const Dashboard = () => {
         <button
           className="dashboard-button"
           data-testid="button-stop"
-          disabled={streamMessage === "stop"}
+          disabled={message === "stop"}
           onClick={() => stream("stop")}
         >
           Stop
         </button>
       </div>
-      {packets && (
-        <Table getSelectedPacket={getSelectedPacket} packets={packets} />
-      )}
-      {selectedPacket && (
-        <PacketDetailsViewer selectedPacket={selectedPacket} />
+      {Boolean(count) && (
+        <>
+          <Table2LocalStoragePacketObjects
+            setSelected={setSelected}
+            selected={selected}
+            count={count}
+          />
+          {/* {selected?.selected && (
+            <JSONViewer selectedData={JSON.parse(data[selected.index])} />
+          )} */}
+        </>
       )}
     </div>
   );

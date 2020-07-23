@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from "react";
-import Table from "./Table";
-import PacketDetailsViewer from "./PacketDetailsViewer";
+import Table1LocalStoragePacketsArray from "./Table1LocalStoragePacketsArray";
+import JSONViewer from "./JSONViewer";
+
 import "./Dashboard.css";
 
 const WebSocket_API = "ws://localhost:3030";
 const socketClient = new WebSocket(WebSocket_API);
 
 const Dashboard = () => {
-  const [streamMessage, setStreamMessage] = useState("");
-  const [packets, setPackets] = useState(null);
-  const [selectedPacket, setSelectedPacket] = useState(null);
+  const [message, setMessage] = useState("");
+  const [count, setCount] = useState(0);
+  const [selected, setSelected] = useState({});
 
   useEffect(() => {
-    return () => {
-      console.log("Unmounting dashboard");
-      localStorage.clear();
-    };
+    console.log("mounting");
+    localStorage.removeItem("pcapData");
   }, []);
 
   socketClient.onopen = (e) => {
@@ -23,17 +22,17 @@ const Dashboard = () => {
   };
 
   socketClient.onmessage = (e) => {
-    setPackets(e.data);
+    const localData = JSON.parse(localStorage.getItem("pcapData")) || [];
+    localStorage.setItem("pcapData", JSON.stringify([...localData, e.data]));
+    setCount(count + 1);
   };
 
   const stream = (message) => {
-    setStreamMessage(message);
+    setMessage(message);
     socketClient.send(message);
   };
 
-  const getSelectedPacket = (packet) => {
-    setSelectedPacket(packet);
-  };
+  const data = JSON.parse(localStorage.getItem("pcapData") || "[]");
 
   return (
     <div>
@@ -44,7 +43,7 @@ const Dashboard = () => {
         <button
           className="dashboard-button"
           data-testid="button-start"
-          disabled={streamMessage === "start"}
+          disabled={message === "start"}
           onClick={() => stream("start")}
         >
           Start
@@ -52,17 +51,23 @@ const Dashboard = () => {
         <button
           className="dashboard-button"
           data-testid="button-stop"
-          disabled={streamMessage === "stop"}
+          disabled={message === "stop"}
           onClick={() => stream("stop")}
         >
           Stop
         </button>
       </div>
-      {packets && (
-        <Table getSelectedPacket={getSelectedPacket} packets={packets} />
-      )}
-      {selectedPacket && (
-        <PacketDetailsViewer selectedPacket={selectedPacket} />
+      {Boolean(count) && (
+        <>
+          <Table1LocalStoragePacketsArray
+            setSelected={setSelected}
+            selected={selected}
+            data={data}
+          />
+          {selected?.selected && (
+            <JSONViewer selectedData={JSON.parse(data[selected.index])} />
+          )}
+        </>
       )}
     </div>
   );

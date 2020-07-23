@@ -1,12 +1,12 @@
 import React from "react";
 import JSONTree from "react-json-tree";
 
-const JSONViewer = ({ selectedData }) => {
+const PacketDetailsViewer = ({ selectedPacket }) => {
   return (
     <div>
-      <h2>JSON VIewer</h2>
+      <h2>Packet Details</h2>
       <JSONTree
-        data={selectedData}
+        data={selectedPacket}
         theme="monokai"
         hideRoot={true}
         getItemString={(type, data, itemType, itemString) => <span></span>}
@@ -15,4 +15,4 @@ const JSONViewer = ({ selectedData }) => {
   );
 };
 
-export default JSONViewer;
+export default PacketDetailsViewer;

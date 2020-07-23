@@ -7,7 +7,6 @@
 table {
   width: 90vw;
   margin: auto;
-  border-collapse: collapse;
 }
 th {
   position: sticky;
@@ -17,10 +16,13 @@ th {
 tr {
   text-align: center;
 }
+tr:hover {
+  cursor: pointer;
+  background-color: aliceblue;
+}
 th,
 td {
   box-shadow: 0 0 2px 1px lightgray;
-  border-radius: 0.3em;
   padding: 20px;
 }
 td {
