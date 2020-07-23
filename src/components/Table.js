@@ -3,41 +3,38 @@ import "./Table.css";
 import useWindowUnloadEffect from "../utils/useWindowUnloadEffect";
 
 const Table = ({ getSelectedPacket, packet }) => {
+
   const cleanup = () => {
     console.log("clearing localStorage");
     localStorage.clear();
   };
+
   useWindowUnloadEffect(cleanup, true);
 
-  const [count, setCount] = useState(0);
-  const [_windowStart, setWindowStart] = useState(1);
+  const [windowStart, ] = useState(1);
   const [windowEnd, setWindowEnd] = useState(0);
-
-  useEffect(() => {
-    console.log("mounting table");
-    localStorage.clear();
-    return () => {
-      console.log("unmounting table");
-      localStorage.clear();
-    };
-  }, []);
-
-  useEffect(() => {
-    setWindowEnd(count);
-  }, [count]);
-
-  useEffect(() => {
-    if (packet) {
-      const newCount = count + 1;
-      localStorage.setItem(newCount, packet);
-      setCount(newCount);
-    }
-  }, [packet]);
-
   const [selectedPacketRow, setSelectedPacketRow] = useState({
     index: null,
     packet: null,
   });
+
+  useEffect(() => {
+    return () => {
+      console.log("unmounting table");
+      cleanup();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (packet) {
+      console.log(packet);
+      const { frame } = JSON.parse(packet);
+      console.log(frame);
+      const frameno = frame["frame.number"];
+      setWindowEnd(frameno);
+      localStorage.setItem(frameno, packet);
+    }
+  }, [packet]);
 
   useEffect(() => {
     getSelectedPacket(selectedPacketRow.packet);
@@ -45,9 +42,9 @@ const Table = ({ getSelectedPacket, packet }) => {
   }, [selectedPacketRow, getSelectedPacket]);
 
   const renderPackets = () => {
-    console.log("Render", _windowStart, windowEnd);
+    console.log("Render", windowStart, windowEnd);
     let packets = [];
-    for (let i = _windowStart; i <= windowEnd; i++) {
+    for (let i = windowStart; i <= windowEnd; i++) {
       const packet = JSON.parse(localStorage.getItem(i) || "{}");
       const { frame, ip } = packet;
       packets.push(
@@ -56,7 +53,7 @@ const Table = ({ getSelectedPacket, packet }) => {
           className={
             selectedPacketRow && selectedPacketRow.index === i ? "selected" : ""
           }
-          onClick={() => setSelectedPacketRow({ index: i, packet })}
+          onClick={() =>  (packet !== {} ? setSelectedPacketRow({ index: i, packet }): null)}
         >
           <td>{frame["frame.number"]}</td>
           <td>{frame["frame.time"]}</td>

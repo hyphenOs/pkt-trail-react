@@ -15,7 +15,7 @@ const useWindowUnloadEffect = (handler, callOnCleanup) => {
       if (callOnCleanup) handler();
       window.removeEventListener("beforeunload", handler);
     };
-  }, [cbRef]);
+  }, [cbRef, callOnCleanup]);
 };
 
 export default useWindowUnloadEffect;
