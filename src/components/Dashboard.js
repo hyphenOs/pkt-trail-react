@@ -12,7 +12,10 @@ const Dashboard = () => {
   const [selectedPacket, setSelectedPacket] = useState(null);
 
   useEffect(() => {
-    console.log("mounting");
+    return () => {
+      console.log("Unmounting dashboard");
+      localStorage.clear();
+    };
   }, []);
 
   socketClient.onopen = (e) => {
@@ -56,7 +59,7 @@ const Dashboard = () => {
         </button>
       </div>
       {packet && (
-        <Table getSelectedPacket={setSelectedPacket} packet={packet} />
+        <Table getSelectedPacket={getSelectedPacket} packet={packet} />
       )}
       {selectedPacket && (
         <PacketDetailsViewer selectedPacket={selectedPacket} />
