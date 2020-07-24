@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import "./App.css";
-import config from "./constants/config";
+import defaultConfig from "./constants/config";
 import Dashboard from "./components/Dashboard";
+import config from "./constants/config";
+import Settings from "./components/Settings";
 
 const WebSocket_API = "ws://localhost:3030";
 const socketClient = new WebSocket(WebSocket_API);
@@ -9,6 +11,8 @@ const socketClient = new WebSocket(WebSocket_API);
 function App() {
   const [streamMessage, setStreamMessage] = useState("");
   const [packets, setPackets] = useState(null);
+  const [config, setConfig] = useState(defaultConfig);
+  const [openSettings, setOpenSettings] = useState(false);
 
   socketClient.onopen = (e) => {
     console.log("connection opened");
@@ -21,6 +25,10 @@ function App() {
   const stream = (message) => {
     setStreamMessage(message);
     socketClient.send(message);
+  };
+
+  const openFormSettings = () => {
+    setOpenSettings((openSettings) => !openSettings);
   };
 
   return (
@@ -45,7 +53,17 @@ function App() {
         >
           Stop
         </button>
+        <button className="app-button" onClick={openFormSettings}>
+          Settings
+        </button>
       </div>
+      {openSettings && (
+        <Settings
+          setOpenSettings={setOpenSettings}
+          setConfigProps={setConfig}
+          configProps={config}
+        />
+      )}
       <Dashboard packets={packets} config={config} />
     </div>
   );

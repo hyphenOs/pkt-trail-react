@@ -3,7 +3,6 @@ import "./Table.css";
 import useWindowUnloadEffect from "./utils/useWindowUnloadEffect";
 
 const Table = ({ getSelectedPacket, packets }) => {
-
   const cleanup = () => {
     console.log("clearing localStorage");
     localStorage.clear();
@@ -20,7 +19,6 @@ const Table = ({ getSelectedPacket, packets }) => {
 
   useEffect(() => {
     return () => {
-      console.log("unmounting table");
       cleanup();
     };
   }, []);
@@ -47,7 +45,6 @@ const Table = ({ getSelectedPacket, packets }) => {
   }, [selectedPacketRow, getSelectedPacket]);
 
   const renderPackets = () => {
-    console.log("Render", windowStart, windowEnd);
     let packets = [];
     for (let i = windowStart; i <= windowEnd; i++) {
       const packet = JSON.parse(localStorage.getItem(i) || "{}");
