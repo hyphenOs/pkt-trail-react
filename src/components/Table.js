@@ -5,6 +5,7 @@ import useWindowUnloadEffect from "./utils/useWindowUnloadEffect";
 const Table = ({ getSelectedPacket, packets }) => {
   const cleanup = () => {
     console.log("clearing localStorage");
+    console.log(new Error().stack);
     localStorage.clear();
   };
 
@@ -29,6 +30,7 @@ const Table = ({ getSelectedPacket, packets }) => {
     if (typeof packets === "string") {
       packetsList = [packets];
     }
+
     for (let packet of packetsList) {
       if (packet) {
         const { frame } = JSON.parse(packet);
@@ -49,7 +51,8 @@ const Table = ({ getSelectedPacket, packets }) => {
     for (let i = windowStart; i <= windowEnd; i++) {
       const packet = JSON.parse(localStorage.getItem(i) || "{}");
       const { frame, ip } = packet;
-      packets.push(
+      if (Object.keys(packet).length !== 0) {
+        packets.push(
         <tr
           key={i}
           className={
@@ -66,7 +69,8 @@ const Table = ({ getSelectedPacket, packets }) => {
           <td>{frame["frame.protocols"]}</td>
           <td>{frame["frame.len"]}</td>
         </tr>
-      );
+        );
+      }
     }
     return packets;
   };
