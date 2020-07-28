@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import "./App.css";
 import defaultConfig from "./constants/config";
 import Dashboard from "./components/Dashboard";
-import config from "./constants/config";
 import Settings from "./components/Settings";
 
 const WebSocket_API = "ws://localhost:3030";
