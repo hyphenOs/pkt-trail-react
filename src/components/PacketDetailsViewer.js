@@ -1,3 +1,8 @@
+/**
+ * PacketDetailsViewer component
+ *
+ * @author Mayur Borse <mayur@hyphenos.io>
+ */
 import React from "react";
 import JSONTree from "react-json-tree";
 

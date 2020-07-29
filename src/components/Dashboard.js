@@ -1,3 +1,8 @@
+/**
+ * Top Level `Dashboard` Component.
+ *
+ * @author Mayur Borse <mayur@hyphenos.io>
+ */
 import React, { useState } from "react";
 import Table from "./Table";
 import PacketDetailsViewer from "./PacketDetailsViewer";
