@@ -1,4 +1,7 @@
-// Using cutom hook from here https://stackoverflow.com/a/39085062
+/**
+ * A Custom hook to be called on `windowunload`. Useful during devevelopment
+ * Reference:  https://stackoverflow.com/a/39085062
+ */
 
 const { useEffect, useRef } = require("react");
 
