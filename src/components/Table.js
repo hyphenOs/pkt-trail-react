@@ -87,9 +87,11 @@ const Table = ({ getSelectedPacket, packets, config }) => {
     }
   }, [packets]);
 
+  /**
+   * Pass selected packet object back to parent component via inverse data flow.
+   */
   useEffect(() => {
     getSelectedPacket(selectedPacketRow.packet);
-    return () => {};
   }, [selectedPacketRow, getSelectedPacket]);
 
   /**
@@ -98,15 +100,7 @@ const Table = ({ getSelectedPacket, packets, config }) => {
    * When you reach the 'beginning' -> jump minus by `config.jumpSize`
    */
   const handleScroll = (e) => {
-    const {
-      scrollHeight,
-      scrollTop,
-      clientHeight,
-      scroll,
-      scrollTo,
-      scrollBy,
-      scrollIntoView,
-    } = e.target;
+    const { scrollHeight, scrollTop, clientHeight } = e.target;
     const isScrollBegin = scrollTop === 0;
     const isScrollEnd = Math.round(scrollHeight - scrollTop) === clientHeight;
 
@@ -141,6 +135,19 @@ const Table = ({ getSelectedPacket, packets, config }) => {
   };
 
   /**
+   * Handles two cases on table row click
+   * 1. Toggle selected row on second click
+   * 2. Set clicked row as new selectedPacketRow
+   * @param {number} index - index of selected row
+   * @param {object} packet - packet data of selected row
+   */
+  const handleRowClick = (index, packet) => {
+    selectedPacketRow.index === index
+      ? setSelectedPacketRow({ index: null, packet: null })
+      : setSelectedPacketRow({ index, packet });
+  };
+
+  /**
    * called by the `render` below. This is constant time now.
    * worst case `windowSize` equivalent of packets are rendered.
    */
@@ -158,9 +165,7 @@ const Table = ({ getSelectedPacket, packets, config }) => {
                 ? "selected"
                 : ""
             }
-            onClick={() =>
-              packet !== {} ? setSelectedPacketRow({ index: i, packet }) : null
-            }
+            onClick={() => handleRowClick(i, packet)}
           >
             <td>{frame["frame.number"]}</td>
             <td>{frame["frame.time"]}</td>
