@@ -6,6 +6,11 @@
 import React from "react";
 import JSONTree from "react-json-tree";
 
+/**
+ * Memoized PacketDetailsViewer component.
+ * @param {object} selectedPacket - Packet selected in Table component.
+ * @param {object} config - config options passed to customize output.
+ */
 const PacketDetailsViewer = ({ selectedPacket, config }) => {
   return (
     <div>
@@ -21,4 +26,4 @@ const PacketDetailsViewer = ({ selectedPacket, config }) => {
   );
 };
 
-export default PacketDetailsViewer;
+export default React.memo(PacketDetailsViewer);
