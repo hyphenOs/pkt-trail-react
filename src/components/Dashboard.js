@@ -16,7 +16,7 @@ const Dashboard = ({ packets, config }) => {
 
   /**
    * Toggles selected packet between received packet object or empty object {}
-   * param {object} packet - Selected packet object
+   * @param {object} packet - Selected packet object
    * useCallback hook invokes this functions only when packet is selected in Table.
    */
   const getSelectedPacket = useCallback((packet) => {
