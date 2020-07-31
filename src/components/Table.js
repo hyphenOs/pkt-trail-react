@@ -70,7 +70,7 @@ const Table = ({ getSelectedPacket, packets, config }) => {
     for (let packet of packetsList) {
       if (packet) {
         const { frame } = JSON.parse(packet);
-        const frameno = frame["frame.number"];
+        const frameno = parseInt(frame["frame.number"]);
         if (frameno < minFrameNo) {
           setMinFrameNo(frameno);
         }
