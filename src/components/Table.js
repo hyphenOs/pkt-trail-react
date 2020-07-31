@@ -5,7 +5,7 @@
  * @author Abhijit Gadgil <gabhijit@hyphenos.io>
  *
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./Table.css";
 import useWindowUnloadEffect from "./utils/useWindowUnloadEffect";
 
@@ -35,6 +35,12 @@ const Table = ({ getSelectedPacket, packets, config }) => {
   useWindowUnloadEffect(cleanup, true);
 
   /**
+   * References to the first and last table row
+   */
+  const firstRowRef = useRef();
+  const lastRowRef = useRef();
+
+  /**
    * We always render one `window` equivalent of Packets a window is determined
    * by windowStart and windowEnd
    */
@@ -42,10 +48,37 @@ const Table = ({ getSelectedPacket, packets, config }) => {
   const [windowEnd, setWindowEnd] = useState(null);
 
   /**
+   * Autoscroll state used to show autoscroll status and toggle it on or off.
+   * If 'on' autoscroll will update the window and scroll to last table row on new data reception.
+   * autoscroll will be turned 'off' if scrolled upwards.
+   */
+  const [autoscroll, setAutoscroll] = useState(config.autoscroll);
+
+  /**
+   * scrollTop state of table-container div used for detecting scrolling direction.
+   */
+  const [prevScrollTop, setPrevScrollTop] = useState(0);
+
+  /**
    * min/max frame Numbers required when scrolling
    */
   const [minFrameNo, setMinFrameNo] = useState(Infinity);
   const [maxFrameNo, setMaxFrameNo] = useState(-Infinity);
+
+  /**
+   * If autoscroll is 'on', update window and scroll last row into view on new packets reception
+   */
+  useEffect(() => {
+    if (autoscroll) {
+      setWindowEnd(maxFrameNo);
+      setWindowStart(
+        Math.max(minFrameNo, maxFrameNo - config.packetWindowSize)
+      );
+      if (lastRowRef.current) {
+        lastRowRef.current.scrollIntoView(false);
+      }
+    }
+  }, [maxFrameNo]);
 
   /**
    * sending back our selected row to DetailView via Parent
@@ -67,10 +100,11 @@ const Table = ({ getSelectedPacket, packets, config }) => {
       packetsList = [packets];
     }
 
+    let frameno = -Infinity;
     for (let packet of packetsList) {
       if (packet) {
         const { frame } = JSON.parse(packet);
-        const frameno = parseInt(frame["frame.number"]);
+        frameno = parseInt(frame["frame.number"]);
         if (frameno < minFrameNo) {
           setMinFrameNo(frameno);
         }
@@ -104,6 +138,17 @@ const Table = ({ getSelectedPacket, packets, config }) => {
     const isScrollBegin = scrollTop === 0;
     const isScrollEnd = Math.round(scrollHeight - scrollTop) === clientHeight;
 
+    /**
+     * Detect scroll direction by comparing current scrollTop with prevScrollTop.
+     * Turn autoscroll 'off' if scrolling upward (scrollTop < prevScrollTop)
+     */
+    if (scrollTop < prevScrollTop) {
+      if (prevScrollTop - scrollTop > 5) {
+        setAutoscroll(false);
+      }
+    }
+    setPrevScrollTop(scrollTop);
+
     if (isScrollBegin) {
       let start = windowStart - config.jumpSize;
       let end = windowEnd - config.jumpSize;
@@ -117,6 +162,8 @@ const Table = ({ getSelectedPacket, packets, config }) => {
         setWindowStart(start);
         setWindowEnd(end);
       }
+      firstRowRef.current.scrollIntoView(true);
+
     }
     if (isScrollEnd) {
       let start = windowStart + config.jumpSize;
@@ -131,6 +178,7 @@ const Table = ({ getSelectedPacket, packets, config }) => {
         setWindowStart(start);
         setWindowEnd(end);
       }
+      lastRowRef.current.scrollIntoView(false);
     }
   };
 
@@ -160,6 +208,13 @@ const Table = ({ getSelectedPacket, packets, config }) => {
         packets.push(
           <tr
             key={i}
+            ref={
+              i === windowEnd
+                ? lastRowRef
+                : i === windowStart
+                ? firstRowRef
+                : null
+            }
             className={
               selectedPacketRow && selectedPacketRow.index === i
                 ? "selected"
@@ -181,21 +236,26 @@ const Table = ({ getSelectedPacket, packets, config }) => {
   };
 
   return (
-    <div className="table-container" onScroll={handleScroll}>
-      <table>
-        <thead>
-          <tr>
-            <th>Frame No.</th>
-            <th>Time</th>
-            <th>Source</th>
-            <th>Dest</th>
-            <th>Protocol (Port)</th>
-            <th>Length</th>
-          </tr>
-        </thead>
-        <tbody>{renderPackets()}</tbody>
-      </table>
-    </div>
+    <>
+      <button onClick={() => setAutoscroll((autoscroll) => !autoscroll)}>
+        Autoscroll: {autoscroll ? "On" : "Off"}
+      </button>
+      <div className="table-container" onScroll={handleScroll}>
+        <table>
+          <thead>
+            <tr>
+              <th>Frame No.</th>
+              <th>Time</th>
+              <th>Source</th>
+              <th>Dest</th>
+              <th>Protocol (Port)</th>
+              <th>Length</th>
+            </tr>
+          </thead>
+          <tbody>{renderPackets()}</tbody>
+        </table>
+      </div>
+    </>
   );
 };
 
