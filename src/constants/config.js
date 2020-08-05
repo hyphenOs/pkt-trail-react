@@ -4,7 +4,8 @@ const config = {
   },
   tableConfig: {
     packetWindowSize: 50,
-    jumpSize: 10,
+    jumpSize: 1,
+    autoscroll: true
   },
   detailsConfig: {
     expanded: false,
