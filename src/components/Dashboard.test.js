@@ -1,14 +1,8 @@
-import React, { useState } from "react";
-import { render, fireEvent } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
-import Dashboard from './Dashboard'
-
-describe("PCAPTable related function", () => {
-  test("Start button click starts reception", () => {});
-  const { getByTestId, getByText } = render(<Dashboard />);
-  const buttonStart = getByTestId("button-start");
-  const buttonStop = getByTestId("button-stop");
-
-  expect(buttonStart.innerHTML).toBe("Start");
-  expect(buttonStop.innerHTML).toBe("Stop");
+/**
+ * Test cases for ensuring passed props are valid and doesn't crash the application
+ */
+describe("<Dashboard packets={packets} config={config}/>", () => {
+  it("Does not mount Table component if packets and config are undefined", () => {});
+  it("Mounts Table component if packets and config are defined", () => {});
+  it("Mounts Table component if packets are defined and config is undefined", () => {});
 });

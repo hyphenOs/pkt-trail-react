@@ -2,8 +2,8 @@ import React from "react";
 import { render } from "@testing-library/react";
 import App from "./App";
 
-test("renders learn react link", () => {
+test("renders App component with header 'Packet Viewer'", () => {
   const { getByText } = render(<App />);
-  const linkElement = getByText(/Wireshark/i);
+  const linkElement = getByText(/Packet Viewer/i);
   expect(linkElement).toBeInTheDocument();
 });
