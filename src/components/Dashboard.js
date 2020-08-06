@@ -4,6 +4,7 @@
  * @author Mayur Borse <mayur@hyphenos.io>
  */
 import React, { useState, useCallback } from "react";
+import defaultConfig from "./constants/defaultConfig";
 import Table from "./Table";
 import PacketDetailsViewer from "./PacketDetailsViewer";
 import "./Dashboard.css";
@@ -24,9 +25,24 @@ const Dashboard = ({ packets, config }) => {
   }, []);
 
   /**
+   *  Current config state
+   */
+  const [currentConfig, setCurrentConfig] = useState(() =>
+    config ? mergeConfig(defaultConfig, config) : defaultConfig
+  );
+
+  function mergeConfig(oldConfig, newConfig) {
+    let mergedConfig = {};
+    for (let key in newConfig) {
+      mergedConfig[key] = { ...oldConfig[key], ...newConfig[key] };
+    }
+    return mergedConfig;
+  }
+
+  /**
    * Config objects are passed to respective components.
    */
-  const { dashboardConfig, tableConfig, detailsConfig } = config;
+  const { dashboardConfig, tableConfig, detailsConfig } = currentConfig;
 
   return (
     <div className="packet-dashboard">
