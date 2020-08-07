@@ -10,7 +10,6 @@ import "./Table.css";
 import useWindowUnloadEffect from "./utils/useWindowUnloadEffect";
 
 const Table = ({ getSelectedPacket, packets, config }) => {
-
   /**
    * Following is equivalent of `componentDidMount` and `componentWillUnmount`
    */
@@ -75,7 +74,10 @@ const Table = ({ getSelectedPacket, packets, config }) => {
         Math.max(minFrameNo, maxFrameNo - config.packetWindowSize)
       );
       if (lastRowRef.current) {
-        lastRowRef.current.scrollIntoView(false);
+        // FIXME: Mock this action in test case
+        if (lastRowRef.current.scrollIntoView) {
+          lastRowRef.current.scrollIntoView(false);
+        }
       }
     }
   }, [maxFrameNo]);
@@ -87,6 +89,11 @@ const Table = ({ getSelectedPacket, packets, config }) => {
     index: null,
     packet: null,
   });
+
+  /**
+   *  Collection of invalid packets. Total count is shown on UI.
+   */
+  const [invalidPackets, setinvalidPackets] = useState([]);
 
   /**
    * Called on receiving `packets`. Like `componentWillReceiveProps`
@@ -103,8 +110,14 @@ const Table = ({ getSelectedPacket, packets, config }) => {
     let frameno = -Infinity;
     for (let packet of packetsList) {
       if (packet) {
-        const { frame } = JSON.parse(packet);
-        frameno = parseInt(frame["frame.number"]);
+        try {
+          const { frame } = JSON.parse(packet);
+          frameno = parseInt(frame["frame.number"]);
+        } catch (e) {
+          console.error("invalid packet", e);
+          setinvalidPackets((invalidPackets) => [...invalidPackets, packet]);
+          continue;
+        }
         if (frameno < minFrameNo) {
           setMinFrameNo(frameno);
         }
@@ -163,7 +176,6 @@ const Table = ({ getSelectedPacket, packets, config }) => {
         setWindowEnd(end);
       }
       firstRowRef.current.scrollIntoView(true);
-
     }
     if (isScrollEnd) {
       let start = windowStart + config.jumpSize;
@@ -240,6 +252,9 @@ const Table = ({ getSelectedPacket, packets, config }) => {
       <button onClick={() => setAutoscroll((autoscroll) => !autoscroll)}>
         Autoscroll: {autoscroll ? "On" : "Off"}
       </button>
+      <div className="invalid-packets-count">
+        Invalid Packets: {invalidPackets.length}
+      </div>
       <div className="table-container" onScroll={handleScroll}>
         <table>
           <thead>
