@@ -108,31 +108,80 @@ const Table = ({ getSelectedPacket, packets, config }) => {
     }
 
     let frameno = -Infinity;
+
+    /**
+     *  Used to batch update state values for each batch of packets.
+     *  Keys (object) are named after the state they update.
+     *  In each object,
+     *  value and stateValue refer to value of state with same name as key
+     *  setCall refers to setState function of respective state
+     *  stateValue is used to refer to respective state value
+     *  value gets updated for each valid packet and set to respective state using setCall
+     *  setCall is invoked with value only if value(updated local value) !== stateValue(curret state value)
+     */
+    let local = {
+      invalidPackets: {
+        value: invalidPackets,
+        setCall: setinvalidPackets,
+        stateValue: invalidPackets,
+      },
+      minFrameNo: {
+        value: minFrameNo,
+        setCall: setMinFrameNo,
+        stateValue: minFrameNo,
+      },
+      maxFrameNo: {
+        value: maxFrameNo,
+        setCall: setMaxFrameNo,
+        stateValue: maxFrameNo,
+      },
+      windowStart: {
+        value: windowStart,
+        setCall: setWindowStart,
+        stateValue: windowStart,
+      },
+      windowEnd: {
+        value: windowEnd,
+        setCall: setWindowEnd,
+        stateValue: windowEnd,
+      },
+    };
+
     for (let packet of packetsList) {
       if (packet) {
         try {
           const { frame } = JSON.parse(packet);
           frameno = parseInt(frame["frame.number"]);
         } catch (e) {
-          console.error("invalid packet", e);
-          setinvalidPackets((invalidPackets) => [...invalidPackets, packet]);
+          console.error("Invalid packet");
+          local.invalidPackets.value.push(packet);
           continue;
         }
-        if (frameno < minFrameNo) {
-          setMinFrameNo(frameno);
+        if (frameno < local.minFrameNo.value) {
+          local.minFrameNo.value = frameno;
         }
-        if (frameno > maxFrameNo) {
-          setMaxFrameNo(frameno);
+        if (frameno > local.maxFrameNo.value) {
+          local.maxFrameNo.value = frameno;
         }
-        if (!windowStart) {
-          setWindowStart(frameno);
-          setWindowEnd(frameno + config.packetWindowSize);
+        if (!local.windowStart.value) {
+          local.windowStart.value = frameno;
+          local.windowEnd.value = frameno + config.packetWindowSize;
         }
         // FIXME: Use IndexDB
         localStorage.setItem(frameno, packet);
       }
     }
+    batchRequestStateUpdate(local);
   }, [packets]);
+
+  const batchRequestStateUpdate = (local) => {
+    for (let state in local) {
+      let obj = local[state];
+      if (obj.value !== obj.stateValue) {
+        obj["setCall"](obj.value);
+      }
+    }
+  };
 
   /**
    * Pass selected packet object back to parent component via inverse data flow.
