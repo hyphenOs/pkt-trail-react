@@ -1,5 +1,7 @@
 # Webshark Frontend
 
+[![Build Status](https://travis-ci.com/hyphenOs/webshark-frontend.svg?branch=master)](https://travis-ci.com/hyphenOs/webshark-frontend)
+
 Written in React.js, it receives and renders JSON Data from the backend server. It uses *Start* and *Stop* buttons to start or stop the data reception. Data communication is done using websocket protocol.
 
 Use following commands to get started
