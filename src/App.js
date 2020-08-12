@@ -1,3 +1,8 @@
+/** App component
+ *  Provides actions like 'start' or 'stop' packet reception and
+ * 'settings' to customize UI..
+ */
+
 import React, { useState } from "react";
 import "./App.css";
 import defaultConfig from "./constants/config";

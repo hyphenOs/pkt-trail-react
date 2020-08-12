@@ -30,8 +30,14 @@ Jest will consider a file as test case for
 
 - `shallow` tests component in isolation (as unit) and renders without child components.
 - `mount` renders the full DOM with child components.
+- `setProps(newProps)` sets newProps and causes re-render
+- `update()` syncs enzyme component tree with react component tree. Used immediately after `setProps` to update enzyme tree.
 
 [Enzyme render methods](https://enzymejs.github.io/enzyme/docs/api/)
+
+[setProps](https://enzymejs.github.io/enzyme/docs/api/ShallowWrapper/setProps.html)
+
+[update](https://enzymejs.github.io/enzyme/docs/api/ShallowWrapper/update.html)
 
 ## Disable watcher for CI Mode
 

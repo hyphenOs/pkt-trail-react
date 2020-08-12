@@ -1,3 +1,8 @@
+/** Test Suites and Cases for Table component
+ *
+ *  @author Mayur Borse <mayur@hyphenos.io>
+ */
+
 import React from "react";
 import { shallow, mount, configure } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
@@ -53,10 +58,6 @@ describe("<Table />", () => {
     }
   });
 
-  it("Renders 2 rows for batch of 2 packets (initial)", () => {});
-
-  it("Renders 2 rows for batch of 2 packets (new Props)", () => {});
-
   /**
    *  Test suite for invalid packets related test cases.
    *  Invalid packets are collected and count of total invalid packets is shown on UI
@@ -75,6 +76,55 @@ describe("<Table />", () => {
     });
 
     it("Show all invalid packets in table form using modal", () => {});
+  });
+  describe("Batch of packets", () => {
+    it("Renders 3 rows for batch of 3 packets (initial)", () => {
+      const wrapper = mount(
+        <Table
+          packets={[
+            JSON.stringify(samplePackets5[0]),
+            JSON.stringify(samplePackets5[1]),
+            JSON.stringify(samplePackets5[2]),
+          ]}
+          getSelectedPacket={() => {}}
+          config={defaultConfig.tableConfig}
+        />
+      );
+      expect(wrapper.find("tbody").find("tr")).toHaveLength(3);
+    });
+
+    /**
+     *  We have 3 batches of packets. Total packerts are 5.
+     *  Batch1: 2 packets, Batch2: 1 packet and Batch3: 2 packets
+     *  Asserting number of table rows are equal to number of total received packets
+     *  after each batch render
+     */
+    it("Renders n rows for batches of packets with total n packets (new Props)", () => {
+      const wrapper = mount(
+        <Table
+          packets={[
+            JSON.stringify(samplePackets5[0]),
+            JSON.stringify(samplePackets5[1]),
+          ]}
+          getSelectedPacket={() => {}}
+          config={defaultConfig.tableConfig}
+        />
+      );
+      expect(wrapper.find("tbody").find("tr")).toHaveLength(2);
+      wrapper.setProps({
+        packets: [JSON.stringify(samplePackets5[2])],
+      });
+      wrapper.update();
+      expect(wrapper.find("tbody").find("tr")).toHaveLength(3);
+      wrapper.setProps({
+        packets: [
+          JSON.stringify(samplePackets5[3]),
+          JSON.stringify(samplePackets5[4]),
+        ],
+      });
+      wrapper.update();
+      expect(wrapper.find("tbody").find("tr")).toHaveLength(5);
+    });
   });
 });
 
