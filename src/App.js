@@ -1,13 +1,16 @@
 /** App component
- *  Provides actions like 'start' or 'stop' packet reception and
- * 'settings' to customize UI..
+ *
+ *  @author Mayur Borse <mayur@hyphenos.io>
+ *
+ *  Provides actions like 'start' or 'stop' packet reception
+ *  and 'settings' form modal to customize UI
  */
 
 import React, { useState } from "react";
 import "./App.css";
 import defaultConfig from "./constants/config";
 import Dashboard from "./components/Dashboard";
-import Settings from "./components/Settings";
+import Settings from "./Settings";
 
 const WebSocket_API = "ws://localhost:3030";
 const socketClient = new WebSocket(WebSocket_API);
