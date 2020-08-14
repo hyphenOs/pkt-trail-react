@@ -7,8 +7,8 @@ import React from "react";
 import { shallow, mount, configure } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
 import Table from "./Table";
-import defaultConfig from "./constants/defaultConfig";
-import samplePackets5 from "./testdata/sample-packets-5.json";
+import defaultConfig from "../constants/defaultConfig";
+import samplePackets5 from "../testdata/sample-packets-5.json";
 
 configure({ adapter: new Adapter() });
 
