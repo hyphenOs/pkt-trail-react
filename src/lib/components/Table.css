@@ -1,0 +1,33 @@
+.table-container {
+  max-height: 50vh;
+  overflow-y: scroll;
+  padding: 1px;
+  margin: 20px;
+}
+table {
+  width: 90vw;
+  margin: auto;
+}
+th {
+  position: sticky;
+  top: 0;
+  background-color: aliceblue;
+}
+tr {
+  text-align: center;
+}
+tr:hover {
+  cursor: pointer;
+  background-color: aliceblue;
+}
+th,
+td {
+  box-shadow: 0 0 2px 1px lightgray;
+  padding: 20px;
+}
+td {
+  padding: 10px;
+}
+.selected {
+  background-color: lightblue;
+}

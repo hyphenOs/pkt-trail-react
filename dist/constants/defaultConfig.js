@@ -1,6 +1,6 @@
-const config = {
+const defaultConfig = {
   dashboardConfig: {
-    showSelectedDetails: true,
+    showSelectedDetails: true
   },
   tableConfig: {
     packetWindowSize: 50,
@@ -8,8 +8,7 @@ const config = {
     autoscroll: true
   },
   detailsConfig: {
-    expanded: false,
-  },
+    expanded: false
+  }
 };
-
-export default config;
+export default defaultConfig;

@@ -7,7 +7,7 @@
  */
 import React, { useState, useEffect, useRef } from "react";
 import "./Table.css";
-import useWindowUnloadEffect from "./utils/useWindowUnloadEffect";
+import useWindowUnloadEffect from "../utils/useWindowUnloadEffect";
 
 const Table = ({ getSelectedPacket, packets, config }) => {
   /**

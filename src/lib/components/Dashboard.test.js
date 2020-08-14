@@ -8,7 +8,7 @@ import { shallow, configure } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
 
 import Dashboard from "./Dashboard";
-import defaultConfig from "./constants/defaultConfig";
+import defaultConfig from "../constants/defaultConfig";
 
 configure({ adapter: new Adapter() });
 
