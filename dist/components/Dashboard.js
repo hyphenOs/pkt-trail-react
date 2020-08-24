@@ -3,10 +3,11 @@
  *
  * @author Mayur Borse <mayur@hyphenos.io>
  */
-import React, { useState, useCallback } from 'react';
-import defaultConfig from '../constants/defaultConfig';
-import Table from './Table';
-import PacketDetailsViewer from './PacketDetailsViewer';
+import React, { useState, useCallback } from "react";
+import defaultConfig from "../constants/defaultConfig";
+import Table from "./Table";
+import PacketDetailsViewer from "./PacketDetailsViewer";
+import ErrorBoundary from "./ErrorBoundary";
 
 const Dashboard = ({
   packets,
@@ -55,14 +56,14 @@ const Dashboard = ({
   if (!packets) return /*#__PURE__*/React.createElement("h2", null, "No packets provided");
   return /*#__PURE__*/React.createElement("div", {
     className: "packet-dashboard"
-  }, packets && /*#__PURE__*/React.createElement(Table, {
+  }, /*#__PURE__*/React.createElement(ErrorBoundary, null, packets && /*#__PURE__*/React.createElement(Table, {
     getSelectedPacket: getSelectedPacket,
     packets: packets,
     config: tableConfig
   }), dashboardConfig?.showSelectedDetails && selectedPacket && /*#__PURE__*/React.createElement(PacketDetailsViewer, {
     selectedPacket: selectedPacket,
     config: detailsConfig
-  }));
+  })));
 };
 
 export default Dashboard;
