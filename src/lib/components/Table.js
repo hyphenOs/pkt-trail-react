@@ -7,32 +7,8 @@
  */
 import React, { useState, useEffect, useRef } from "react";
 import "./Table.css";
-import useWindowUnloadEffect from "../utils/useWindowUnloadEffect";
 
-const Table = ({ getSelectedPacket, packets, config }) => {
-  /**
-   * Following is equivalent of `componentDidMount` and `componentWillUnmount`
-   */
-  useEffect(() => {
-    return () => {
-      cleanup();
-    };
-  }, []);
-
-  /**
-   * private function clears `localStorage`
-   */
-  const cleanup = () => {
-    console.log("clearing localStorage");
-    console.log(new Error().stack);
-    localStorage.clear();
-  };
-
-  /**
-   * cleanup everything on `windowUnload`
-   */
-  useWindowUnloadEffect(cleanup, true);
-
+const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
   /**
    * References to the first and last table row
    */
@@ -41,10 +17,33 @@ const Table = ({ getSelectedPacket, packets, config }) => {
 
   /**
    * We always render one `window` equivalent of Packets a window is determined
-   * by windowStart and windowEnd
+   * by windowStart and windowEnd. PacketsToRender contains retrieved packets from db
+   * with frame_number between windowStart and windowEnd
    */
+  const [packetsToRender, setPacketsToRender] = useState([]);
   const [windowStart, setWindowStart] = useState(null);
   const [windowEnd, setWindowEnd] = useState(null);
+
+  useEffect(() => {
+    const isInvalidKey = (value) =>
+      !isFinite(value) || value === null || value === undefined;
+
+    const isInvalidRange = () => windowStart > windowEnd;
+
+    if (
+      isInvalidKey(windowStart) ||
+      isInvalidKey(windowEnd) ||
+      isInvalidRange()
+    ) {
+      return;
+    }
+
+    pktTrailDB
+      .getAll("packets", IDBKeyRange.bound(windowStart, windowEnd))
+      .then((values) => {
+        setPacketsToRender(values);
+      });
+  }, [pktTrailDB, windowStart, windowEnd]);
 
   /**
    * Autoscroll state used to show autoscroll status and toggle it on or off.
@@ -80,7 +79,7 @@ const Table = ({ getSelectedPacket, packets, config }) => {
         }
       }
     }
-  }, [maxFrameNo]);
+  }, [autoscroll, config.packetWindowSize, maxFrameNo, minFrameNo]);
 
   /**
    * sending back our selected row to DetailView via Parent
@@ -108,6 +107,33 @@ const Table = ({ getSelectedPacket, packets, config }) => {
     }
 
     let frameno = -Infinity;
+
+    // Called after validation
+    const savePacketsToDB = (validPackets, successCB) => {
+      const tx = pktTrailDB.transaction("packets", "readwrite");
+
+      // Save valid packets only
+      const transactions = validPackets.map((validPacket) =>
+        tx.store.add(validPacket)
+      );
+      transactions.push(tx.done); // Indicating End of Operation
+
+      Promise.all(transactions)
+        .then((res) => {
+          console.log("packets saved.", res);
+          successCB();
+        })
+        .catch((error) => console.log(error));
+    };
+
+    const batchRequestStateUpdate = (local) => {
+      for (let state in local) {
+        let obj = local[state];
+        if (obj.value !== obj.stateValue) {
+          obj["setCall"](obj.value);
+        }
+      }
+    };
 
     /**
      *  Used to batch update state values for each batch of packets.
@@ -146,15 +172,19 @@ const Table = ({ getSelectedPacket, packets, config }) => {
         stateValue: windowEnd,
       },
     };
-
+    const validPackets = [];
     for (let packet of packetsList) {
       if (packet) {
         try {
-          const { frame } = JSON.parse(packet);
-          frameno = parseInt(frame["frame.number"]);
+          packet = typeof packet === "string" ? JSON.parse(packet) : packet;
+          const { frame } = packet;
+          frameno = frame["frame_number"];
         } catch (e) {
           console.error("Invalid packet");
           local.invalidPackets.value.push(packet);
+          /**
+           * Feature: Save invalid packets to indexedDB
+           */
           continue;
         }
         if (frameno < local.minFrameNo.value) {
@@ -167,21 +197,14 @@ const Table = ({ getSelectedPacket, packets, config }) => {
           local.windowStart.value = frameno;
           local.windowEnd.value = frameno + config.packetWindowSize;
         }
-        // FIXME: Use IndexDB
-        localStorage.setItem(frameno, packet);
+        validPackets.push(packet);
       }
     }
-    batchRequestStateUpdate(local);
+    savePacketsToDB(validPackets, () => {
+      batchRequestStateUpdate(local);
+    });
+    // FIXME: Exhaustive Deps warning by eslint
   }, [packets]);
-
-  const batchRequestStateUpdate = (local) => {
-    for (let state in local) {
-      let obj = local[state];
-      if (obj.value !== obj.stateValue) {
-        obj["setCall"](obj.value);
-      }
-    }
-  };
 
   /**
    * Pass selected packet object back to parent component via inverse data flow.
@@ -224,7 +247,9 @@ const Table = ({ getSelectedPacket, packets, config }) => {
         setWindowStart(start);
         setWindowEnd(end);
       }
-      firstRowRef.current.scrollIntoView(true);
+      if (firstRowRef.current) {
+        firstRowRef.current.scrollIntoView(true);
+      }
     }
     if (isScrollEnd) {
       let start = windowStart + config.jumpSize;
@@ -239,7 +264,9 @@ const Table = ({ getSelectedPacket, packets, config }) => {
         setWindowStart(start);
         setWindowEnd(end);
       }
-      lastRowRef.current.scrollIntoView(false);
+      if (lastRowRef.current) {
+        lastRowRef.current.scrollIntoView(false);
+      }
     }
   };
 
@@ -261,12 +288,12 @@ const Table = ({ getSelectedPacket, packets, config }) => {
    * worst case `windowSize` equivalent of packets are rendered.
    */
   const renderPackets = () => {
-    let packets = [];
-    for (let i = windowStart; i <= windowEnd; i++) {
-      const packet = JSON.parse(localStorage.getItem(i) || "{}");
+    let rendered = [];
+    for (let packet of packetsToRender) {
       const { frame, ip } = packet;
       if (Object.keys(packet).length !== 0) {
-        packets.push(
+        const i = frame.frame_number;
+        rendered.push(
           <tr
             key={i}
             ref={
@@ -283,17 +310,17 @@ const Table = ({ getSelectedPacket, packets, config }) => {
             }
             onClick={() => handleRowClick(i, packet)}
           >
-            <td>{frame["frame.number"]}</td>
-            <td>{frame["frame.time"]}</td>
-            <td>{ip ? ip["ip.src"] : "unknown"}</td>
-            <td>{ip ? ip["ip.dst"] : "unknown"}</td>
-            <td>{frame["frame.protocols"]}</td>
-            <td>{frame["frame.len"]}</td>
+            <td>{frame["frame_number"]}</td>
+            <td>{frame["frame_time"]}</td>
+            <td>{ip ? ip["ip_src"] : "unknown"}</td>
+            <td>{ip ? ip["ip_dst"] : "unknown"}</td>
+            <td>{frame["frame_protocols"]}</td>
+            <td>{frame["frame_len"]}</td>
           </tr>
         );
       }
     }
-    return packets;
+    return rendered;
   };
 
   return (
