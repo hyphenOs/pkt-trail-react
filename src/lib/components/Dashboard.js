@@ -3,11 +3,28 @@
  *
  * @author Mayur Borse <mayur@hyphenos.io>
  */
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import defaultConfig from "../constants/defaultConfig";
 import Table from "./Table";
 import PacketDetailsViewer from "./PacketDetailsViewer";
 import ErrorBoundary from "./ErrorBoundary";
+import { dbPromise, dbDeletePromise } from "../utils/indexedDBSetup";
+
+/**
+ * DBPromise resolves with 'db' assigned to resolvedDB.
+ */
+let resolvedDB;
+dbDeletePromise
+  .then(() => {
+    dbPromise
+      .then((db) => {
+        resolvedDB = db;
+      })
+      .catch((err) => console.log(err));
+  })
+  .catch((error) => {
+    console.log("error", error);
+  });
 
 const Dashboard = ({ packets, config }) => {
   /**
@@ -20,9 +37,12 @@ const Dashboard = ({ packets, config }) => {
    * @param {object} packet - Selected packet object
    * useCallback hook invokes this functions only when packet is selected in Table.
    */
-  const getSelectedPacket = useCallback((packet) => {
-    setSelectedPacket(selectedPacket ? null : packet);
-  }, []);
+  const getSelectedPacket = useCallback(
+    (packet) => {
+      setSelectedPacket(selectedPacket ? null : packet);
+    },
+    [selectedPacket]
+  );
 
   /**
    *  Current config state
@@ -44,20 +64,23 @@ const Dashboard = ({ packets, config }) => {
    */
   const { dashboardConfig, tableConfig, detailsConfig } = currentConfig;
 
-  if (!packets) return <h2>No packets provided</h2>;
+  if (packets === null || packets === undefined) {
+    return <h2>No packets provided</h2>;
+  }
 
   return (
     <div className="packet-dashboard">
       <ErrorBoundary>
-        {packets && (
+        {packets && resolvedDB && (
           <Table
             getSelectedPacket={getSelectedPacket}
             packets={packets}
             config={tableConfig}
+            db={resolvedDB}
           />
         )}
 
-        {dashboardConfig?.showSelectedDetails && selectedPacket && (
+        {dashboardConfig.showSelectedDetails && selectedPacket && (
           <PacketDetailsViewer
             selectedPacket={selectedPacket}
             config={detailsConfig}
