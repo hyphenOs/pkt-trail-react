@@ -8,23 +8,18 @@ import defaultConfig from "../constants/defaultConfig";
 import Table from "./Table";
 import PacketDetailsViewer from "./PacketDetailsViewer";
 import ErrorBoundary from "./ErrorBoundary";
-import { dbPromise, dbDeletePromise } from "../utils/indexedDBSetup";
+import { dbPromise } from "../utils/indexedDBSetup";
 
 /**
  * DBPromise resolves with 'db' assigned to resolvedDB.
  */
 let resolvedDB;
-dbDeletePromise
-  .then(() => {
-    dbPromise
-      .then((db) => {
-        resolvedDB = db;
-      })
-      .catch((err) => console.log(err));
+dbPromise
+  .then((db) => {
+    resolvedDB = db;
+    resolvedDB.clear("packets");
   })
-  .catch((error) => {
-    console.log("error", error);
-  });
+  .catch((err) => console.log(err));
 
 const Dashboard = ({ packets, config }) => {
   /**
