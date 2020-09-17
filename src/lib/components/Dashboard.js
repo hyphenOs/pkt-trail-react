@@ -9,35 +9,65 @@ import Table from "./Table";
 import PacketDetailsViewer from "./PacketDetailsViewer";
 import ErrorBoundary from "./ErrorBoundary";
 import { dbPromise } from "../utils/indexedDBSetup";
+import Modal from "./Modal";
 
-/**
- * DBPromise resolves with 'db' assigned to resolvedDB.
- */
 let resolvedDB;
-dbPromise
-  .then((db) => {
-    resolvedDB = db;
-    resolvedDB.clear("packets");
-  })
-  .catch((err) => console.log(err));
 
-const Dashboard = ({ packets, config }) => {
+const Dashboard = ({ packets, config, getPktTrailReadyStatus }) => {
   /**
    * selectedPacket will be rendered by PacketDetailsViewer if not empty
    */
   const [selectedPacket, setSelectedPacket] = useState(null);
 
   /**
+   * Used to render loader on initial mount and render error (if any)
+   * occured during initialization process
+   */
+  const [hasInitialized, setHasInitialized] = useState({
+    status: false,
+    message: "initializing...",
+    error: null,
+  });
+
+  useEffect(() => {
+    /**
+     * DBPromise resolves with 'db' assigned to resolvedDB.
+     * "packets" objectstore is cleared and 'hasInitialized' is set true
+     */
+    dbPromise
+      .then((db) => {
+        resolvedDB = db;
+        resolvedDB
+          .clear("packets")
+          .then(() => {
+            setHasInitialized({ status: true, message: "", error: null });
+            getPktTrailReadyStatus(true);
+          })
+          .catch((error) => {
+            setHasInitialized({
+              status: true,
+              message: "",
+              error: String(error),
+            });
+          });
+      })
+      .catch((error) => {
+        setHasInitialized({
+          status: true,
+          message: "",
+          error: String(error),
+        });
+      });
+  }, [getPktTrailReadyStatus]);
+
+  /**
    * Toggles selected packet between received packet object or empty object {}
    * @param {object} packet - Selected packet object
    * useCallback hook invokes this functions only when packet is selected in Table.
    */
-  const getSelectedPacket = useCallback(
-    (packet) => {
-      setSelectedPacket(selectedPacket ? null : packet);
-    },
-    [selectedPacket]
-  );
+  const getSelectedPacket = useCallback((packet) => {
+    setSelectedPacket((selectedPacket) => (selectedPacket ? null : packet));
+  }, []);
 
   /**
    *  Current config state
@@ -59,6 +89,17 @@ const Dashboard = ({ packets, config }) => {
    */
   const { dashboardConfig, tableConfig, detailsConfig } = currentConfig;
 
+  // Rendered until initial setup is completed
+  if (!hasInitialized.status)
+    return (
+      <Modal showModal={!hasInitialized.status}>{hasInitialized.message}</Modal>
+    );
+
+  if (hasInitialized.error)
+    return (
+      <Modal showModal={hasInitialized.error}>{hasInitialized.error}</Modal>
+    );
+
   if (packets === null || packets === undefined) {
     return <h2>No packets provided</h2>;
   }
@@ -66,7 +107,7 @@ const Dashboard = ({ packets, config }) => {
   return (
     <div className="packet-dashboard">
       <ErrorBoundary>
-        {packets && resolvedDB && (
+        {packets && (
           <Table
             getSelectedPacket={getSelectedPacket}
             packets={packets}
