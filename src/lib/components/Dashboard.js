@@ -66,7 +66,9 @@ const Dashboard = ({ packets, config, getPktTrailReadyStatus }) => {
    * useCallback hook invokes this functions only when packet is selected in Table.
    */
   const getSelectedPacket = useCallback((packet) => {
-    setSelectedPacket((selectedPacket) => (selectedPacket ? null : packet));
+    setSelectedPacket((selectedPacket) =>
+      selectedPacket === packet ? null : packet
+    );
   }, []);
 
   /**

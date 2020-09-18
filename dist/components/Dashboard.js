@@ -67,7 +67,7 @@ const Dashboard = ({
    */
 
   const getSelectedPacket = useCallback(packet => {
-    setSelectedPacket(selectedPacket => selectedPacket ? null : packet);
+    setSelectedPacket(selectedPacket => selectedPacket === packet ? null : packet);
   }, []);
   /**
    *  Current config state
