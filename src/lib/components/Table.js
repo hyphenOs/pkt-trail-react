@@ -15,6 +15,7 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
   const firstRowRef = useRef();
   const lastRowRef = useRef();
 
+  const isMounted = useRef(true);
   /**
    * We always render one `window` equivalent of Packets a window is determined
    * by windowStart and windowEnd. PacketsToRender contains retrieved packets from db
@@ -24,7 +25,19 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
   const [windowStart, setWindowStart] = useState(null);
   const [windowEnd, setWindowEnd] = useState(null);
 
+  // Component isMounted check to ignore state update at places.
   useEffect(() => {
+
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+    };
+
+  });
+
+  useEffect(() => {
+
     const isInvalidKey = (value) =>
       !isFinite(value) || value === null || value === undefined;
 
@@ -41,7 +54,9 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
     pktTrailDB
       .getAll("packets", IDBKeyRange.bound(windowStart, windowEnd))
       .then((values) => {
-        setPacketsToRender(values);
+        if (isMounted.current) {
+          setPacketsToRender(values);
+        }
       });
   }, [pktTrailDB, windowStart, windowEnd]);
 
@@ -67,6 +82,11 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
    * If autoscroll is 'on', update window and scroll last row into view on new packets reception
    */
   useEffect(() => {
+
+    if (!isMounted.current) {
+      return;
+    }
+
     if (autoscroll) {
       setWindowEnd(maxFrameNo);
       setWindowStart(
@@ -100,7 +120,10 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
    * TODO : Sometimes we may want to avoid reRender (`shouldComponentUpdate`)
    */
   useEffect(() => {
-    if (!packets) return;
+
+    if (!packets)
+      return;
+
     let packetsList = packets;
     if (typeof packets === "string") {
       packetsList = [packets];
@@ -110,23 +133,38 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
 
     // Called after validation
     const savePacketsToDB = (validPackets, successCB) => {
+
+      if (validPackets.length == 0) {
+        return;
+      }
+
       const tx = pktTrailDB.transaction("packets", "readwrite");
 
       // Save valid packets only
-      const transactions = validPackets.map((validPacket) =>
-        tx.store.add(validPacket)
-      );
+      const transactions = validPackets.map((validPacket) => {
+        try {
+          tx.store.add(validPacket)
+        } catch(e) {
+          console.log(e);
+          local.invalidPackets.value.push(validPacket);
+        }
+      });
+
       transactions.push(tx.done); // Indicating End of Operation
 
       Promise.all(transactions)
         .then((res) => {
-          console.log("packets saved.", res);
           successCB();
         })
         .catch((error) => console.log(error));
     };
 
     const batchRequestStateUpdate = (local) => {
+
+      if (! isMounted.current) {
+        return;
+      }
+
       for (let state in local) {
         let obj = local[state];
         if (obj.value !== obj.stateValue) {
@@ -172,6 +210,7 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
         stateValue: windowEnd,
       },
     };
+
     const validPackets = [];
     for (let packet of packetsList) {
       if (packet) {
@@ -200,9 +239,11 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
         validPackets.push(packet);
       }
     }
+
     savePacketsToDB(validPackets, () => {
       batchRequestStateUpdate(local);
     });
+
     // FIXME: Exhaustive Deps warning by eslint
   }, [packets]);
 
@@ -210,6 +251,7 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
    * Pass selected packet object back to parent component via inverse data flow.
    */
   useEffect(() => {
+
     getSelectedPacket(selectedPacketRow.packet);
   }, [selectedPacketRow, getSelectedPacket]);
 
@@ -293,8 +335,10 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
       const { frame, ip } = packet;
       if (Object.keys(packet).length !== 0) {
         const i = frame.frame_number;
+        const dataTestId = "packet-rows-" + i;
         rendered.push(
           <tr
+            data-testid={dataTestId}
             key={i}
             ref={
               i === windowEnd
@@ -331,10 +375,10 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
       <div className="invalid-packets-count">
         Invalid Packets: {invalidPackets.length}
       </div>
-      <div className="table-container" onScroll={handleScroll}>
+      <div className="table-container" data-testid="testid-table" onScroll={handleScroll}>
         <table>
           <thead>
-            <tr>
+            <tr data-testid="test-tr">
               <th>Frame No.</th>
               <th>Time</th>
               <th>Source</th>
@@ -343,7 +387,7 @@ const Table = ({ getSelectedPacket, packets, config, db: pktTrailDB }) => {
               <th>Length</th>
             </tr>
           </thead>
-          <tbody>{renderPackets()}</tbody>
+          <tbody data-testid="test-tbody">{renderPackets()}</tbody>
         </table>
       </div>
     </>

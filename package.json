@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build": "rm -rf dist && NODE_ENV=production babel src/lib --out-dir dist --copy-files --ignore __tests__,spec.js,test.js,__snapshots__",
-    "test": "react-scripts test"
+    "test": "react-scripts test  --env=jest-environment-jsdom-sixteen"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -18,7 +18,8 @@
     "@babel/core": "^7.11.1",
     "@babel/preset-react": "^7.10.4",
     "@testing-library/jest-dom": "^5.11.2",
-    "@testing-library/react": "^9.3.2",
+    "jest-environment-jsdom-sixteen": "^1.0.3",
+    "@testing-library/react": "^11.0",
     "@testing-library/user-event": "^7.1.2",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.2",
