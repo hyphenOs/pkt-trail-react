@@ -7,49 +7,40 @@
  */
 import React, { useState, useEffect, useRef } from "react";
 import "./Table.css";
-import useWindowUnloadEffect from "../utils/useWindowUnloadEffect";
 
 const Table = ({
   getSelectedPacket,
   packets,
-  config
+  config,
+  db: pktTrailDB
 }) => {
-  /**
-   * Following is equivalent of `componentDidMount` and `componentWillUnmount`
-   */
-  useEffect(() => {
-    return () => {
-      cleanup();
-    };
-  }, []);
-  /**
-   * private function clears `localStorage`
-   */
-
-  const cleanup = () => {
-    console.log("clearing localStorage");
-    console.log(new Error().stack);
-    localStorage.clear();
-  };
-  /**
-   * cleanup everything on `windowUnload`
-   */
-
-
-  useWindowUnloadEffect(cleanup, true);
   /**
    * References to the first and last table row
    */
-
   const firstRowRef = useRef();
   const lastRowRef = useRef();
   /**
    * We always render one `window` equivalent of Packets a window is determined
-   * by windowStart and windowEnd
+   * by windowStart and windowEnd. PacketsToRender contains retrieved packets from db
+   * with frame_number between windowStart and windowEnd
    */
 
+  const [packetsToRender, setPacketsToRender] = useState([]);
   const [windowStart, setWindowStart] = useState(null);
   const [windowEnd, setWindowEnd] = useState(null);
+  useEffect(() => {
+    const isInvalidKey = value => !isFinite(value) || value === null || value === undefined;
+
+    const isInvalidRange = () => windowStart > windowEnd;
+
+    if (isInvalidKey(windowStart) || isInvalidKey(windowEnd) || isInvalidRange()) {
+      return;
+    }
+
+    pktTrailDB.getAll("packets", IDBKeyRange.bound(windowStart, windowEnd)).then(values => {
+      setPacketsToRender(values);
+    });
+  }, [pktTrailDB, windowStart, windowEnd]);
   /**
    * Autoscroll state used to show autoscroll status and toggle it on or off.
    * If 'on' autoscroll will update the window and scroll to last table row on new data reception.
@@ -84,7 +75,7 @@ const Table = ({
         }
       }
     }
-  }, [maxFrameNo]);
+  }, [autoscroll, config.packetWindowSize, maxFrameNo, minFrameNo]);
   /**
    * sending back our selected row to DetailView via Parent
    */
@@ -112,7 +103,29 @@ const Table = ({
       packetsList = [packets];
     }
 
-    let frameno = -Infinity;
+    let frameno = -Infinity; // Called after validation
+
+    const savePacketsToDB = (validPackets, successCB) => {
+      const tx = pktTrailDB.transaction("packets", "readwrite"); // Save valid packets only
+
+      const transactions = validPackets.map(validPacket => tx.store.add(validPacket));
+      transactions.push(tx.done); // Indicating End of Operation
+
+      Promise.all(transactions).then(res => {
+        console.log("packets saved.", res);
+        successCB();
+      }).catch(error => console.log(error));
+    };
+
+    const batchRequestStateUpdate = local => {
+      for (let state in local) {
+        let obj = local[state];
+
+        if (obj.value !== obj.stateValue) {
+          obj["setCall"](obj.value);
+        }
+      }
+    };
     /**
      *  Used to batch update state values for each batch of packets.
      *  Keys (object) are named after the state they update.
@@ -123,6 +136,7 @@ const Table = ({
      *  value gets updated for each valid packet and set to respective state using setCall
      *  setCall is invoked with value only if value(updated local value) !== stateValue(curret state value)
      */
+
 
     let local = {
       invalidPackets: {
@@ -151,17 +165,23 @@ const Table = ({
         stateValue: windowEnd
       }
     };
+    const validPackets = [];
 
     for (let packet of packetsList) {
       if (packet) {
         try {
+          packet = typeof packet === "string" ? JSON.parse(packet) : packet;
           const {
             frame
-          } = JSON.parse(packet);
-          frameno = parseInt(frame["frame.number"]);
+          } = packet;
+          frameno = frame["frame_number"];
         } catch (e) {
           console.error("Invalid packet");
           local.invalidPackets.value.push(packet);
+          /**
+           * Feature: Save invalid packets to indexedDB
+           */
+
           continue;
         }
 
@@ -176,29 +196,19 @@ const Table = ({
         if (!local.windowStart.value) {
           local.windowStart.value = frameno;
           local.windowEnd.value = frameno + config.packetWindowSize;
-        } // FIXME: Use IndexDB
+        }
 
-
-        localStorage.setItem(frameno, packet);
+        validPackets.push(packet);
       }
     }
 
-    batchRequestStateUpdate(local);
+    savePacketsToDB(validPackets, () => {
+      batchRequestStateUpdate(local);
+    }); // FIXME: Exhaustive Deps warning by eslint
   }, [packets]);
-
-  const batchRequestStateUpdate = local => {
-    for (let state in local) {
-      let obj = local[state];
-
-      if (obj.value !== obj.stateValue) {
-        obj["setCall"](obj.value);
-      }
-    }
-  };
   /**
    * Pass selected packet object back to parent component via inverse data flow.
    */
-
 
   useEffect(() => {
     getSelectedPacket(selectedPacketRow.packet);
@@ -243,7 +253,9 @@ const Table = ({
         setWindowEnd(end);
       }
 
-      firstRowRef.current.scrollIntoView(true);
+      if (firstRowRef.current) {
+        firstRowRef.current.scrollIntoView(true);
+      }
     }
 
     if (isScrollEnd) {
@@ -259,7 +271,9 @@ const Table = ({
         setWindowEnd(end);
       }
 
-      lastRowRef.current.scrollIntoView(false);
+      if (lastRowRef.current) {
+        lastRowRef.current.scrollIntoView(false);
+      }
     }
   };
   /**
@@ -287,26 +301,26 @@ const Table = ({
 
 
   const renderPackets = () => {
-    let packets = [];
+    let rendered = [];
 
-    for (let i = windowStart; i <= windowEnd; i++) {
-      const packet = JSON.parse(localStorage.getItem(i) || "{}");
+    for (let packet of packetsToRender) {
       const {
         frame,
         ip
       } = packet;
 
       if (Object.keys(packet).length !== 0) {
-        packets.push( /*#__PURE__*/React.createElement("tr", {
+        const i = frame.frame_number;
+        rendered.push( /*#__PURE__*/React.createElement("tr", {
           key: i,
           ref: i === windowEnd ? lastRowRef : i === windowStart ? firstRowRef : null,
           className: selectedPacketRow && selectedPacketRow.index === i ? "selected" : "",
           onClick: () => handleRowClick(i, packet)
-        }, /*#__PURE__*/React.createElement("td", null, frame["frame.number"]), /*#__PURE__*/React.createElement("td", null, frame["frame.time"]), /*#__PURE__*/React.createElement("td", null, ip ? ip["ip.src"] : "unknown"), /*#__PURE__*/React.createElement("td", null, ip ? ip["ip.dst"] : "unknown"), /*#__PURE__*/React.createElement("td", null, frame["frame.protocols"]), /*#__PURE__*/React.createElement("td", null, frame["frame.len"])));
+        }, /*#__PURE__*/React.createElement("td", null, frame["frame_number"]), /*#__PURE__*/React.createElement("td", null, frame["frame_time"]), /*#__PURE__*/React.createElement("td", null, ip ? ip["ip_src"] : "unknown"), /*#__PURE__*/React.createElement("td", null, ip ? ip["ip_dst"] : "unknown"), /*#__PURE__*/React.createElement("td", null, frame["frame_protocols"]), /*#__PURE__*/React.createElement("td", null, frame["frame_len"])));
       }
     }
 
-    return packets;
+    return rendered;
   };
 
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
