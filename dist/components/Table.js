@@ -19,6 +19,7 @@ const Table = ({
    */
   const firstRowRef = useRef();
   const lastRowRef = useRef();
+  const isMounted = useRef(true);
   /**
    * We always render one `window` equivalent of Packets a window is determined
    * by windowStart and windowEnd. PacketsToRender contains retrieved packets from db
@@ -27,7 +28,14 @@ const Table = ({
 
   const [packetsToRender, setPacketsToRender] = useState([]);
   const [windowStart, setWindowStart] = useState(null);
-  const [windowEnd, setWindowEnd] = useState(null);
+  const [windowEnd, setWindowEnd] = useState(null); // Component isMounted check to ignore state update at places.
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  });
   useEffect(() => {
     const isInvalidKey = value => !isFinite(value) || value === null || value === undefined;
 
@@ -38,7 +46,9 @@ const Table = ({
     }
 
     pktTrailDB.getAll("packets", IDBKeyRange.bound(windowStart, windowEnd)).then(values => {
-      setPacketsToRender(values);
+      if (isMounted.current) {
+        setPacketsToRender(values);
+      }
     });
   }, [pktTrailDB, windowStart, windowEnd]);
   /**
@@ -64,6 +74,10 @@ const Table = ({
    */
 
   useEffect(() => {
+    if (!isMounted.current) {
+      return;
+    }
+
     if (autoscroll) {
       setWindowEnd(maxFrameNo);
       setWindowStart(Math.max(minFrameNo, maxFrameNo - config.packetWindowSize));
@@ -106,18 +120,32 @@ const Table = ({
     let frameno = -Infinity; // Called after validation
 
     const savePacketsToDB = (validPackets, successCB) => {
+      if (validPackets.length == 0) {
+        return;
+      }
+
       const tx = pktTrailDB.transaction("packets", "readwrite"); // Save valid packets only
 
-      const transactions = validPackets.map(validPacket => tx.store.add(validPacket));
+      const transactions = validPackets.map(validPacket => {
+        try {
+          tx.store.add(validPacket);
+        } catch (e) {
+          console.log(e);
+          local.invalidPackets.value.push(validPacket);
+        }
+      });
       transactions.push(tx.done); // Indicating End of Operation
 
       Promise.all(transactions).then(res => {
-        console.log("packets saved.", res);
         successCB();
       }).catch(error => console.log(error));
     };
 
     const batchRequestStateUpdate = local => {
+      if (!isMounted.current) {
+        return;
+      }
+
       for (let state in local) {
         let obj = local[state];
 
@@ -311,7 +339,9 @@ const Table = ({
 
       if (Object.keys(packet).length !== 0) {
         const i = frame.frame_number;
+        const dataTestId = "packet-rows-" + i;
         rendered.push( /*#__PURE__*/React.createElement("tr", {
+          "data-testid": dataTestId,
           key: i,
           ref: i === windowEnd ? lastRowRef : i === windowStart ? firstRowRef : null,
           className: selectedPacketRow && selectedPacketRow.index === i ? "selected" : "",
@@ -329,8 +359,13 @@ const Table = ({
     className: "invalid-packets-count"
   }, "Invalid Packets: ", invalidPackets.length), /*#__PURE__*/React.createElement("div", {
     className: "table-container",
+    "data-testid": "testid-table",
     onScroll: handleScroll
-  }, /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Frame No."), /*#__PURE__*/React.createElement("th", null, "Time"), /*#__PURE__*/React.createElement("th", null, "Source"), /*#__PURE__*/React.createElement("th", null, "Dest"), /*#__PURE__*/React.createElement("th", null, "Protocol (Port)"), /*#__PURE__*/React.createElement("th", null, "Length"))), /*#__PURE__*/React.createElement("tbody", null, renderPackets()))));
+  }, /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    "data-testid": "test-tr"
+  }, /*#__PURE__*/React.createElement("th", null, "Frame No."), /*#__PURE__*/React.createElement("th", null, "Time"), /*#__PURE__*/React.createElement("th", null, "Source"), /*#__PURE__*/React.createElement("th", null, "Dest"), /*#__PURE__*/React.createElement("th", null, "Protocol (Port)"), /*#__PURE__*/React.createElement("th", null, "Length"))), /*#__PURE__*/React.createElement("tbody", {
+    "data-testid": "test-tbody"
+  }, renderPackets()))));
 };
 
 export default Table;
