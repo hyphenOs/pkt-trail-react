@@ -24,12 +24,14 @@
     "enzyme-adapter-react-16": "^1.15.2",
     "fake-indexeddb": "^3.1.2",
     "jest-environment-jsdom-sixteen": "^1.0.3",
-    "react-dom": "^16.13.1"
+    "react-dom": "^16.13.1",
+    "immer": "^8.0.1",
+    "node-notifier": "^8.0.1"
   },
   "dependencies": {
     "idb": "^5.0.5",
     "react": "^16.13.1",
     "react-json-tree": "^0.11.2",
-    "react-scripts": "^3.4.4"
+    "react-scripts": "^4.0.1"
   }
 }
